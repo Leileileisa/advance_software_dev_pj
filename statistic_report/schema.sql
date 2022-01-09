@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS report;
+
+CREATE TABLE report (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user TEXT UNIQUE NOT NULL ,
+  department TEXT NOT NULL ,
+  task_unfinished INTEGER DEFAULT 0
+);
