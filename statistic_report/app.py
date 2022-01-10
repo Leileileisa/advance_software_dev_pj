@@ -16,7 +16,7 @@ import json
 
 app = Flask(__name__)
 DATABASE = 'database.db'
-BOOT_STRAP_SERVERS = '127.0.0.1:9092'
+BOOT_STRAP_SERVERS = 'kafka:9092'
 KAFKA_TOPIC = 'change_department'
 @app.route("/")
 def index(page_html="""
@@ -29,18 +29,9 @@ def index(page_html="""
 def report():
     print('report!')
     # name = request.args.get('name',None)
-    department = request.args.get('department', None)
+    # department = request.args.get('department', None)
     db = get_db()
-    if department is None:
-        query_departments = 'select distinct department from report'
-        rs = db.execute(query_departments)
-        department = rs.fetchall()
-    else:
-        department = [department]
-    if len(department) == 0:
-        sql = 'select department, sum(task_unfinished) from report group by department '
-    else:
-        sql = 'select department, sum(task_unfinished) from report group by department where department in ({})'.format(department)
+    sql = 'select department, sum(task_unfinished) from report group by department '
     rs = db.execute(sql)
     return rs.fetchall().__str__()
 
@@ -126,11 +117,13 @@ def init_db():
 def sendMessage(topic, msg):
     try:
         producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
-                                 api_version=(0, 10),
+                                 api_version=(0, 10, 2),
                                  key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        print("开始发送")
         future = producer.send(topic=topic, value=msg)
-        future.get(timeout=10)  # 监控是否发送成功
+        print("发送结束")
+        future.get(timeout=1000)  # 监控是否发送成功
     except kafka_errors:  # 发送失败抛出kafka_errors
         return traceback.format_exc()
     except Exception as e:
@@ -146,15 +139,21 @@ def register_kafka_listener(topic, listener):
         print("About to start polling for topic:", topic)
         consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
-        # for msg in consumer:
-        #     print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
-        #     with app.app_context():
-        #         db=get_db()
-        #         sql_insert = 'insert into user (password) values (\'' + 'leisa' + '\')'
-        #         cur = db.execute(sql_insert)
-        #         db.commit()
-        #         cur.close()
-        #     kafka_listener(msg)
+        for msg in consumer:
+            print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
+            with app.app_context():
+                db = get_db()
+                msg_json = eval(msg.value.decode())
+                sql = 'update report set department="{}" where department="{}" and `user`="{}" ;'\
+                    .format(msg_json['new_department'], msg_json['old_department'], msg_json['user'])
+                print(sql)
+                cur = db.execute(sql)
+                db.commit()
+                cur.close()
+            kafka_listener(msg)
+        # rs = db.execute('select * from report')
+        # return rs.fetchall().__str__()
+
     print("About to register listener to topic:", topic)
     t1 = threading.Thread(target=poll)
     t1.start()
