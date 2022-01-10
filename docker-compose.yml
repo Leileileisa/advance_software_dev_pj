@@ -10,9 +10,9 @@ services:
     ports:
     - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "register_employee:1:1, change_department:1:1"
+      KAFKA_CREATE_TOPICS: "register_employee:1:1, change_department:1:1, register_user:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   employee_management:
@@ -36,3 +36,10 @@ services:
     build:  ./statistic_report
     ports: ['4001:4001']
     volumes: ['./statistic_report:/app']
+  user_management:
+    depends_on:
+      - "kafka"
+    image: user_management
+    build:  ./task_management
+    ports: ['5002:5002']
+    volumes: ['./user_management:/app']
