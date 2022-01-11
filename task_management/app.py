@@ -195,6 +195,13 @@ def sendMessage(topic, msg):
         return e
 
 
+# 测试change_password发消息
+@app.route('/changePassword/<string:name>')
+def changePassword(name):
+    sendMessage('change_password', {'name': name})
+    return "已经发送消息{}".format(name)
+
+
 # 查询统计报表
 @app.route('/report')
 def report():
@@ -207,15 +214,9 @@ def report():
     return rs.fetchall().__str__()
 
 
-# 测试change_password发消息
-@app.route('/changePassword/<string:name>')
-def changePassword(name):
-    sendMessage('change_password', {'name': name})
-
-
 if __name__ == "__main__":
     init_db()
-    register_kafka_employee(topic='register_employee')
-    kafka_change_password(topic='change_password')
-    kafka_change_department(topic='change_department')
+    register_kafka_employee(topic='register_employee')  # {'name':'', 'department':''}
+    kafka_change_password(topic='change_password')  # {'name':''}
+    kafka_change_department(topic='change_department')  # {'name':'', 'department':''}
     app.run(debug=True, host='0.0.0.0', port=5001)
