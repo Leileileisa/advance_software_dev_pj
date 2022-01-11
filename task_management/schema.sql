@@ -1,6 +1,8 @@
-DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS task;
 
-CREATE TABLE user (
+CREATE TABLE task (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  password TEXT NOT NULL check(length(password)<6)
+  user TEXT UNIQUE NOT NULL ,
+  department TEXT NOT NULL ,
+  task_unfinished INTEGER DEFAULT 1
 );

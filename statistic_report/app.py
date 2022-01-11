@@ -17,7 +17,7 @@ import json
 app = Flask(__name__)
 DATABASE = 'database.db'
 BOOT_STRAP_SERVERS = 'kafka:9092'
-KAFKA_TOPIC = 'change_department'
+# KAFKA_TOPIC = 'change__department'
 @app.route("/")
 def index(page_html="""
   <h1>hello statistic report</h1>
@@ -39,7 +39,7 @@ def report():
 @app.route('/insert/<string:user>/<string:department>/<int:task_unfinished>')
 def insert(user, department, task_unfinished):
     db = get_db()
-    rs = db.execute('insert into report(user, department, task_unfinished) values ("{}", "{}", "{}")'.format(user, department, task_unfinished))
+    rs = db.execute('insert into task(user, department, task_unfinished) values ("{}", "{}", "{}")'.format(user, department, task_unfinished))
     db.commit()
     rs.close()
     rs = db.execute('select * from report')
@@ -60,7 +60,7 @@ def delete(id):
 
 @app.route('/testSend/<string:user>/<string:old_department>/<string:new_department>')
 def send(user, old_department, new_department):
-    sendMessage(KAFKA_TOPIC, {'user': user, 'old_department': old_department, 'new_department': new_department})
+    # sendMessage(KAFKA_TOPIC, {'user': user, 'old_department': old_department, 'new_department': new_department})
     return 'send!'
 
 
@@ -130,8 +130,39 @@ def sendMessage(topic, msg):
         return e
 
 
-def register_kafka_listener(topic, listener):
-# Poll kafka
+# def register_kafka_listener(topic, listener):
+# # Poll kafka
+#     def poll():
+#         # Initialize consumer Instance
+#         consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10))
+#         consumer.subscribe(topics=[topic])
+#         print("About to start polling for topic:", topic)
+#         consumer.poll(timeout_ms=6000)
+#         print("Started Polling for topic:", topic)
+#         for msg in consumer:
+#             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
+#             with app.app_context():
+#                 db = get_db()
+#                 msg_json = eval(msg.value.decode())
+#                 sql = 'update report set department="{}" where `user`="{}" ;'\
+#                     .format(msg_json['department'], msg_json['user'])
+#                 print(sql)
+#                 cur = db.execute(sql)
+#                 db.commit()
+#                 cur.close()
+#             kafka_listener(msg)
+#         # rs = db.execute('select * from report')
+#         # return rs.fetchall().__str__()
+#
+#     print("About to register listener to topic:", topic)
+#     t1 = threading.Thread(target=poll)
+#     t1.start()
+#     print("started a background thread")
+
+
+def register_kafka_employee():
+    topic = 'register_employee'
+    # Poll kafka
     def poll():
         # Initialize consumer Instance
         consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10))
@@ -142,14 +173,11 @@ def register_kafka_listener(topic, listener):
         for msg in consumer:
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
-                db = get_db()
                 msg_json = eval(msg.value.decode())
-                sql = 'update report set department="{}" where department="{}" and `user`="{}" ;'\
-                    .format(msg_json['new_department'], msg_json['old_department'], msg_json['user'])
-                print(sql)
-                cur = db.execute(sql)
-                db.commit()
-                cur.close()
+                insert(msg_json['name'], msg_json['department'], 1)
+                # sql = 'update report set department="{}" where department="{}" and `user`="{}" ;'\
+                #     .format(msg_json['new_department'], msg_json['old_department'], msg_json['user'])
+                # print(sql)
             kafka_listener(msg)
         # rs = db.execute('select * from report')
         # return rs.fetchall().__str__()
@@ -166,5 +194,5 @@ def kafka_listener(data):
 
 if __name__ == "__main__":
     init_db()
-    register_kafka_listener(KAFKA_TOPIC, kafka_listener)
+    # register_kafka_listener(KAFKA_TOPIC, kafka_listener)
     app.run(debug=True, host='0.0.0.0', port=4001)
