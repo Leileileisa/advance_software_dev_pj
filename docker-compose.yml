@@ -12,7 +12,8 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "register_employee:1:1, change_department:1:1, register_user:1:1"
+      KAFKA_CREATE_TOPICS: "register_employee:1:1, register_user:1:1,update_passwd:1:1,update_department:1:1"
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   employee_management:
@@ -20,26 +21,20 @@ services:
       - "kafka"
     image: employee_management
     build: ./employee_management
-    ports: ['5000:5000']
+    ports: ['6001:6001']
     volumes: ['./employee_management:/app']
   task_management:
     depends_on:
       - "kafka"
     image: task_management
     build:  ./task_management
-    ports: ['5001:5001']
+    ports: ['5010:5010']
     volumes: ['./task_management:/app']
-  statistic_report:
-    depends_on:
-      - "kafka"
-    image: statistic_report
-    build:  ./statistic_report
-    ports: ['4001:4001']
-    volumes: ['./statistic_report:/app']
   user_management:
     depends_on:
       - "kafka"
     image: user_management
-    build:  ./task_management
+    build:  ./user_management
     ports: ['5002:5002']
     volumes: ['./user_management:/app']
+
