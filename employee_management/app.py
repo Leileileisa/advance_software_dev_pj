@@ -1,18 +1,13 @@
-from flask import Flask
-from flask import request
-from markupsafe import escape
-from flask import current_app, g
-from flask import make_response
-from flask import jsonify
-import click
-import sqlite3
-import sys
-from kafka import KafkaProducer
-from kafka import KafkaConsumer
-from kafka.errors import kafka_errors
-import traceback
-import threading
 import json
+import sqlite3
+import traceback
+
+from flask import Flask
+from flask import g
+from flask import request
+from kafka import KafkaProducer
+from kafka.errors import kafka_errors
+from markupsafe import escape
 
 app = Flask(__name__)
 DATABASE = 'database.db'
@@ -120,6 +115,40 @@ def init_db():
         with app.open_resource('schema.sql', mode='r') as f:
             db.cursor().executescript(f.read())
         db.commit()
+
+
+@app.route('/modify/<string:name>/<string:department>')
+def modify(name, department):
+    if name is None:
+        return f'fail! input your name!'
+    if department is None:
+        return f'fail!input your department!'
+    db = get_db()
+    try:
+        sql_insert = 'update employee set department=' + '\'' + department + '\'' + 'where name=' + '\'' + name + '\''
+        cur = db.execute(sql_insert)
+        db.commit()
+        cur.close()
+        sendMessage('update_department', {'name': name, 'department': department})
+        return f'create successfully! your Name: {escape(name)} your department:{escape(department)}'
+    except:
+        return f'fail! this name dont exist.'
+
+
+def sendMessage(topic, msg):
+    try:
+        producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
+                                 api_version=(0, 10, 2),
+                                 key_serializer=lambda k: json.dumps(k).encode('utf-8'),
+                                 value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+        print("开始发送")
+        future = producer.send(topic=topic, value=msg)
+        print("发送结束")
+        future.get(timeout=1000)  # 监控是否发送成功
+    except kafka_errors:  # 发送失败抛出kafka_errors
+        return traceback.format_exc()
+    except Exception as e:
+        return e
 
 
 if __name__ == "__main__":
