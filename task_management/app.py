@@ -106,7 +106,7 @@ def register_kafka_employee(topic='register_task', listener=kafka_listener):
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
                 msg_json = eval(msg.value.decode())
-                insert_task(msg_json['name'], msg_json['department'], 1)
+                insert_task(msg_json['id'], msg_json['department'], 1)
             listener(msg)
 
     print("About to register listener to topic:", topic)
@@ -143,7 +143,7 @@ def kafka_change_password(topic='update_passwd', listener=kafka_listener):
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
                 msg_json = eval(msg.value.decode())
-                activate_user(msg_json['name'])
+                activate_user(msg_json['id'])
             listener(msg)
 
     print("About to register listener to topic:", topic)
@@ -185,6 +185,7 @@ def activate_user(user):
     cur = db.execute(sql)
     db.commit()
     cur.close()
+    print("用户状态已经激活")
 
 
 def change_department(department, user):
@@ -199,6 +200,6 @@ def change_department(department, user):
 if __name__ == "__main__":
     # init_db()
     register_kafka_employee(topic='register_task', listener=kafka_listener)  # {'name':'', 'department':''}
-    kafka_change_password(topic='update_passwd', listener=kafka_listener)  # {'name':''}
+    kafka_change_password(topic='update_passwd', listener=kafka_listener)  # {'id':''}
     kafka_change_department(topic='update_department', listener=kafka_listener)  # {'name':'', 'department':''}
     app.run(debug=False, host='0.0.0.0', port=6003)

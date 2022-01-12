@@ -59,7 +59,7 @@ def new_password():
                                      api_version=(0, 10, 2),
                                      key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-            future = producer.send('update_passwd', {'name': id})
+            future = producer.send('update_passwd', {'id': id})
             future.get(timeout=10)  # 监控是否发送成功
         except kafka_errors:  # 发送失败抛出kafka_errors
             return traceback.format_exc()

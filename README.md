@@ -73,8 +73,11 @@
      curl "localhost:6003/see"
      curl "localhost:6002/login?id=4&password=wrong"
      curl "localhost:6002/login?id=4&password=123456"
+##### 修改用户密码激活用户后
+     curl "localhost:6002/see"
      curl "localhost:6003/see"
-     curl "localhost:6002/new_password?id=4&password=123456&new_password=pwd1234"
+     curl "localhost:6002/new_password?name=Linda&password=123456&new_password=pwd1234"
+     curl "localhost:6002/new_password?name=Jay&password=123456&new_password=pwd1234"
      curl "localhost:6002/see"
      curl "localhost:6003/see"
      
