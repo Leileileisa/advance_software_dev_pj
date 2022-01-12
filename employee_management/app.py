@@ -89,7 +89,7 @@ def transfer():
                                      api_version=(0, 10, 2),
                                      key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-            future = producer.send('update_department', {'name': id, 'department': department})
+            future = producer.send('update_department', {'id': id, 'department': department})
             future.get(timeout=6000)  # 监控是否发送成功
             producer.close()
         except kafka_errors:  # 发送失败抛出kafka_errors
@@ -123,20 +123,20 @@ def init_db():
         db.commit()
 
 
-@app.route('/modify/<string:name>/<string:department>')
-def modify(name, department):
-    if name is None:
+@app.route('/modify/<string:id>/<string:department>')
+def modify(id, department):
+    if id is None:
         return f'fail! input your name!'
     if department is None:
         return f'fail!input your department!'
     db = get_db()
     try:
-        sql_insert = 'update employee set department=' + '\'' + department + '\'' + 'where name=' + '\'' + name + '\''
+        sql_insert = 'update employee set department=' + '\'' + department + '\'' + 'where name=' + '\'' + id + '\''
         cur = db.execute(sql_insert)
         db.commit()
         cur.close()
-        sendMessage('update_department', {'name': name, 'department': department})
-        return f'create successfully! your Name: {escape(name)} your department:{escape(department)}'
+        sendMessage('update_department', {'id': id, 'department': department})
+        return f'create successfully! your Name: {escape(id)} your department:{escape(department)}'
     except:
         return f'fail! this name dont exist.'
 

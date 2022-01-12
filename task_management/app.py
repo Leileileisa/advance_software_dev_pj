@@ -169,7 +169,7 @@ def kafka_change_department(topic='update_department', listener=kafka_listener):
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
                 msg_json = eval(msg.value.decode())
-                change_department(msg_json['department'], msg_json['name'])
+                change_department(msg_json['department'], msg_json['id'])
             listener(msg)
 
     print("About to register listener to topic:", topic)

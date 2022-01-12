@@ -49,11 +49,8 @@
      curl "localhost:6001/register?department=test&name=Joe"
      curl "localhost:6001/register?department=product&name=Bob"
      curl "localhost:6001/register?department=product&name=Helens"
-     curl "localhost:6001/register?department=product&name=Cathy"
-     curl "localhost:6001/register?department=product&name=Gori"
      curl "localhost:6001/register?department=design&name=Daisy"
      curl "localhost:6001/register?department=design&name=Hindley"
-     curl "localhost:6001/register?department=design&name=Davy"
      
    
 ##### 查看员工，用户，任务系统数据
@@ -76,8 +73,8 @@
 ##### 修改用户密码激活用户后
      curl "localhost:6002/see"
      curl "localhost:6003/see"
-     curl "localhost:6002/new_password?name=Linda&password=123456&new_password=pwd1234"
-     curl "localhost:6002/new_password?name=Jay&password=123456&new_password=pwd1234"
+     curl "localhost:6002/new_password?id=1&password=123456&new_password=pwd1234"
+     curl "localhost:6002/new_password?id=2&password=123456&new_password=pwd1234"
      curl "localhost:6002/see"
      curl "localhost:6003/see"
      
@@ -85,7 +82,7 @@
      curl "localhost:6001/see"
      curl "localhost:6003/see"
      curl "localhost:6003/report"
-     curl "localhost:6001/modify/Linda/design"
+     curl "localhost:6001/transfer?id=3&department=design"
      curl "localhost:6001/see"
      curl "localhost:6003/see"
      curl "localhost:6003/report"
