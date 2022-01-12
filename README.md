@@ -36,11 +36,11 @@
 
 下面为演示内容，按照顺序输入即可
 ## 场景1
-#### 查看员工，用户，任务系统数据
+##### 查看员工，用户，任务系统数据
      curl "localhost:6001/see"
      curl "localhost:6002/see"
      curl "localhost:6003/see"
- #### 注册用户
+##### 注册用户
      curl "localhost:6001/register?department=财务部&name=张三"
      curl "localhost:6001/register?department=财务部&name=刘敏"
      curl "localhost:6001/register?department=销售部&name=王红"
@@ -53,10 +53,12 @@
      curl "localhost:6001/register?department=研发部&name=沈斯"
      curl "localhost:6001/register?department=研发部&name=刘月"
 ## 场景2
-      在docker-desktop中停止task_management和user_management
+##### 在docker-desktop中停止task_management和user_management
+     curl "localhost:6002/see"
+     curl "localhost:6003/see"
      curl "localhost:6001/register?department=销售部&name=李四"
      curl "localhost:6001/see"
-     在docker-desktop中恢复task_management和user_management
+##### 在docker-desktop中恢复task_management和user_management
      curl "localhost:6002/see"
      curl "localhost:6003/see"
      curl "localhost:6002/login?id=4&password=wrong"
