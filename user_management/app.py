@@ -134,7 +134,6 @@ def register_kafka_listener(topic, listener):
                 text.append(msg.value)
                 id = json.loads(msg.value.decode('utf-8'))['id']
                 passwd = json.loads(msg.value.decode('utf-8'))['name']
-                department = json.loads(msg.value.decode('utf-8'))['department']
                 text.append(passwd)
                 text.append(id)
                 text.append(msg.offset)
@@ -143,17 +142,7 @@ def register_kafka_listener(topic, listener):
                              '\'' + str(id) + '\', \'' + str(123456) + '\')'
                 cur.execute(sql_insert)
                 db.commit()
-                try:
-                    producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
-                                     api_version=(0, 10, 2),
-                                             key_serializer=lambda k: json.dumps(k).encode('utf-8'),
-                                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-                    future = producer.send('register_user', {'userid': id, 'department': department})
-                    future.get(timeout=10)  # 监控是否发送成功
-                except kafka_errors:  # 发送失败抛出kafka_errors
-                    return traceback.format_exc()
-                except Exception as e:
-                    return e
+
         consumer.close()
 
     print("About to register listener to topic:", topic)
