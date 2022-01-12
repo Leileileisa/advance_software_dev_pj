@@ -43,6 +43,7 @@ def register():
         return f'fail! this name already exists.'
     try:
         producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
+                                     api_version=(0, 10, 2),
                                  key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         future = producer.send('register_employee', {'id': id, 'name': name, 'department': department})
@@ -81,6 +82,7 @@ def transfer():
         db.commit()
         try:
             producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
+                                     api_version=(0, 10, 2),
                                      key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
             future = producer.send('update_department', {'name': id, 'department': department})

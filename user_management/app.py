@@ -56,6 +56,7 @@ def new_password():
         db.commit()
         try:
             producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
+                                     api_version=(0, 10, 2),
                                      key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
             future = producer.send('update_passwd', {'name': id})
@@ -144,6 +145,7 @@ def register_kafka_listener(topic, listener):
                 db.commit()
                 try:
                     producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
+                                     api_version=(0, 10, 2),
                                              key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                              value_serializer=lambda v: json.dumps(v).encode('utf-8'))
                     future = producer.send('register_user', {'userid': id, 'department': department})
