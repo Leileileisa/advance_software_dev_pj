@@ -28,13 +28,13 @@ services:
       - "kafka"
     image: task_management
     build:  ./task_management
-    ports: ['5010:5010']
+    ports: ['6003:6003']
     volumes: ['./task_management:/app']
   user_management:
     depends_on:
       - "kafka"
     image: user_management
     build:  ./user_management
-    ports: ['5002:5002']
+    ports: ['6002:6002']
     volumes: ['./user_management:/app']
 

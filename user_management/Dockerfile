@@ -1,6 +1,6 @@
 FROM python:3.7
 MAINTAINER leisa "leileileisa@foxmail.com"
-EXPOSE 5002
+EXPOSE 6002
 
 WORKDIR app
 COPY ./requirements.txt /requirements.txt
