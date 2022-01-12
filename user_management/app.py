@@ -166,4 +166,4 @@ def kafka_listener(data):
 
 # init_db()
 register_kafka_listener('register_employee', kafka_listener)
-app.run(debug=False, host='0.0.0.0', port=5002)
+app.run(debug=False, host='0.0.0.0', port=6002)

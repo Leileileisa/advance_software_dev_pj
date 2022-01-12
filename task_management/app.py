@@ -170,4 +170,4 @@ if __name__ == "__main__":
     register_kafka_listener('register_user', kafka_listener)
     kafka_listener_update_passwd('update_passwd', kafka_listener)
     kafka_listener_update_department('update_department', kafka_listener)
-    app.run(debug=False, host='0.0.0.0', port=5010)
+    app.run(debug=False, host='0.0.0.0', port=6003)
