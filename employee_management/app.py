@@ -43,12 +43,15 @@ def register():
         return f'fail! this name already exists.'
     try:
         producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
-                                     api_version=(0, 10, 2),
+                                 api_version=(0, 10, 2),
                                  key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-        future = producer.send('register_employee', {'id': id, 'name': name, 'department': department})
-        future.get(timeout=6000)  # 监控是否发送成功
+        future1 = producer.send('register_employee', {'id': id, 'name': name, 'department': department})
+        future2 = producer.send('register_task', {'id': id, 'name': name, 'department': department})
+        future1.get(timeout=6000)  # 监控是否发送成功
+        future2.get(timeout=6000)  # 监控是否发送成功
         print("发送{}消息成功！".format('register_employee'))
+        print("发送{}消息成功！".format('register_task'))
         producer.close()
     except kafka_errors:  # 发送失败抛出kafka_errors
         return traceback.format_exc()

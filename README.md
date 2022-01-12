@@ -79,7 +79,11 @@
      curl "localhost:6003/see"
      
 ## 场景3
+     curl "localhost:6001/see"
+     curl "localhost:6003/see"
      curl "localhost:6003/report"
      curl "localhost:6001/modify/Linda/design"
+     curl "localhost:6001/see"
+     curl "localhost:6003/see"
      curl "localhost:6003/report"
      

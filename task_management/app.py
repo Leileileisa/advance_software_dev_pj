@@ -51,6 +51,9 @@ def report():
     rs = db.execute(sql)
     return rs.fetchall().__str__()
 
+def kafka_listener(data):
+    print(data)
+
 # def report():
 #     department = request.args.get('department', None)
 #     if department is None:
@@ -88,21 +91,23 @@ def init_db():
 
 
 # 消费员工注册消息，产生一条未完成的任务
-def register_kafka_employee(topic='register_employee'):
+def register_kafka_employee(topic='register_task', listener=kafka_listener):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),)
-        consumer.subscribe(topics=[topic])
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),
+                                 auto_offset_reset='earliest',
+                                 enable_auto_commit=True,
+                                 auto_commit_interval_ms=100,
+                                 group_id='task')
         print("About to start polling for topic:", topic)
-        consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
         for msg in consumer:
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
                 msg_json = eval(msg.value.decode())
                 insert_task(msg_json['name'], msg_json['department'], 1)
-            kafka_listener(msg)
+            listener(msg)
 
     print("About to register listener to topic:", topic)
     t1 = threading.Thread(target=poll)
@@ -123,21 +128,23 @@ def insert_task(user, department, task_unfinished):
 
 
 # 消费员工激活密码消息，更新 未完成的任务 为已完成
-def kafka_change_password(topic='update_passwd'):
+def kafka_change_password(topic='update_passwd', listener=kafka_listener):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),)
-        consumer.subscribe(topics=[topic])
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),
+                                 auto_offset_reset='earliest',
+                                 enable_auto_commit=True,
+                                 auto_commit_interval_ms=100,
+                                 group_id='task')
         print("About to start polling for topic:", topic)
-        consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
         for msg in consumer:
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
                 msg_json = eval(msg.value.decode())
                 activate_user(msg_json['name'])
-            kafka_listener(msg)
+            listener(msg)
 
     print("About to register listener to topic:", topic)
     t1 = threading.Thread(target=poll)
@@ -146,21 +153,24 @@ def kafka_change_password(topic='update_passwd'):
 
 
 # 消费员工更换部门消息，更新 任务的部门 为 新部门
-def kafka_change_department(topic='update_department'):
+def kafka_change_department(topic='update_department', listener=kafka_listener):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2))
-        consumer.subscribe(topics=[topic])
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),
+                                 auto_offset_reset='earliest',
+                                 enable_auto_commit=True,
+                                 auto_commit_interval_ms=100,
+                                 group_id='task'
+                                 )
         print("About to start polling for topic:", topic)
-        consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
         for msg in consumer:
             print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
                 msg_json = eval(msg.value.decode())
                 change_department(msg_json['department'], msg_json['name'])
-            kafka_listener(msg)
+            listener(msg)
 
     print("About to register listener to topic:", topic)
     t1 = threading.Thread(target=poll)
@@ -186,13 +196,9 @@ def change_department(department, user):
     cur.close()
 
 
-def kafka_listener(data):
-    print(data)
-
-
 if __name__ == "__main__":
     # init_db()
-    register_kafka_employee(topic='register_employee')  # {'name':'', 'department':''}
-    kafka_change_password(topic='update_passwd')  # {'name':''}
-    kafka_change_department(topic='update_department')  # {'name':'', 'department':''}
+    register_kafka_employee(topic='register_task', listener=kafka_listener)  # {'name':'', 'department':''}
+    kafka_change_password(topic='update_passwd', listener=kafka_listener)  # {'name':''}
+    kafka_change_department(topic='update_department', listener=kafka_listener)  # {'name':'', 'department':''}
     app.run(debug=False, host='0.0.0.0', port=6003)
