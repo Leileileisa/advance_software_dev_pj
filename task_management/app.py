@@ -92,7 +92,7 @@ def register_kafka_employee(topic='register_employee'):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS)
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),)
         consumer.subscribe(topics=[topic])
         print("About to start polling for topic:", topic)
         consumer.poll(timeout_ms=6000)
@@ -127,7 +127,7 @@ def kafka_change_password(topic='update_passwd'):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS)
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2),)
         consumer.subscribe(topics=[topic])
         print("About to start polling for topic:", topic)
         consumer.poll(timeout_ms=6000)
@@ -150,7 +150,7 @@ def kafka_change_department(topic='update_department'):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS)
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS, api_version=(0, 10, 2))
         consumer.subscribe(topics=[topic])
         print("About to start polling for topic:", topic)
         consumer.poll(timeout_ms=6000)

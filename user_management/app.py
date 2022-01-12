@@ -121,6 +121,7 @@ def register_kafka_listener(topic, listener):
     def poll():
         # Initialize consumer Instance
         consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS,
+                                 api_version=(0, 10, 2),
                                  auto_offset_reset='earliest',
                                  enable_auto_commit=True,
                                  auto_commit_interval_ms=100,
