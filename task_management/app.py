@@ -1,14 +1,11 @@
-from flask import Flask
-from flask import request
-from markupsafe import escape
-from flask import current_app, g
-from flask import make_response
-from flask import jsonify
-import sqlite3
-from kafka import KafkaProducer
-from kafka import KafkaConsumer
-import threading
 import json
+import sqlite3
+import threading
+
+from flask import Flask
+from flask import g
+from flask import request
+from kafka import KafkaConsumer
 
 app = Flask(__name__)
 DATABASE = 'database.db'
@@ -46,15 +43,24 @@ def task():
 
 @app.route('/report')
 def report():
-    department = request.args.get('department', None)
-    if department is None:
-        return f'fail! input department!'
+    print('report!')
+    # name = request.args.get('name',None)
+    # department = request.args.get('department', None)
     db = get_db()
-    sql_query = " select count(*) from task where department= '" + str(department) + " ' and isover=1"
-    cur = db.execute(sql_query)
-    rv = cur.fetchall()
-    cur.close()
-    return str(department) + ":" + str(rv)
+    sql = 'select department, sum(task_unfinished) from task group by department '
+    rs = db.execute(sql)
+    return rs.fetchall().__str__()
+
+# def report():
+#     department = request.args.get('department', None)
+#     if department is None:
+#         return f'fail! input department!'
+#     db = get_db()
+#     sql_query = " select count(*) from task where department= '" + str(department) + " ' and isover=1"
+#     cur = db.execute(sql_query)
+#     rv = cur.fetchall()
+#     cur.close()
+#     return str(department) + ":" + str(rv)
 
 
 def get_db():
@@ -81,27 +87,21 @@ def init_db():
         db.commit()
 
 
-def register_kafka_listener(topic, listener):
+# 消费员工注册消息，产生一条未完成的任务
+def register_kafka_employee(topic='register_employee'):
     # Poll kafka
     def poll():
         # Initialize consumer Instance
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS,
-                                 auto_offset_reset='earliest',
-                                 enable_auto_commit=True,
-                                 auto_commit_interval_ms=100,
-                                 group_id='task')
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS)
+        consumer.subscribe(topics=[topic])
+        print("About to start polling for topic:", topic)
+        consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
         for msg in consumer:
-            msg = json.loads(msg.value.decode('utf-8'))
-            userid = msg['userid']
-            department = msg['department']
+            print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
-                db = get_db()
-                cur = db.cursor()
-                sql_insert = "insert into task (userid,department,content, isover) values('" \
-                             + str(userid) + " '," + " '" + str(department) + " '," + "'updatepasswd','0')"
-                cur.execute(sql_insert)
-                db.commit()
+                msg_json = eval(msg.value.decode())
+                insert_task(msg_json['name'], msg_json['department'], 1)
             kafka_listener(msg)
 
     print("About to register listener to topic:", topic)
@@ -110,23 +110,33 @@ def register_kafka_listener(topic, listener):
     print("started a background thread")
 
 
-def kafka_listener_update_passwd(topic, listener):
+@app.route('/insert/<string:user>/<string:department>/<int:task_unfinished>')
+def insert_task(user, department, task_unfinished):
+    db = get_db()
+    rs = db.execute(
+        'insert into task(user, department, task_unfinished) values ("{}", "{}", "{}")'.format(user, department,
+                                                                                               task_unfinished))
+    db.commit()
+    rs.close()
+    rs = db.execute('select * from task')
+    return rs.fetchall().__str__()
+
+
+# 消费员工激活密码消息，更新 未完成的任务 为已完成
+def kafka_change_password(topic='update_passwd'):
+    # Poll kafka
     def poll():
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS,
-                                 auto_offset_reset='earliest',
-                                 enable_auto_commit=True,
-                                 auto_commit_interval_ms=100,
-                                 group_id='task')
+        # Initialize consumer Instance
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS)
+        consumer.subscribe(topics=[topic])
+        print("About to start polling for topic:", topic)
+        consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
         for msg in consumer:
-            msg = json.loads(msg.value.decode('utf-8'))
-            userid = msg['userid']
+            print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
-                db = get_db()
-                cur = db.cursor()
-                sql_insert = "update task set isover= 1 where userid=" + str(userid)
-                cur.execute(sql_insert)
-                db.commit()
+                msg_json = eval(msg.value.decode())
+                activate_user(msg_json['name'])
             kafka_listener(msg)
 
     print("About to register listener to topic:", topic)
@@ -135,39 +145,56 @@ def kafka_listener_update_passwd(topic, listener):
     print("started a background thread")
 
 
-def kafka_listener_update_department(topic, listener):
+# 消费员工更换部门消息，更新 任务的部门 为 新部门
+def kafka_change_department(topic='update_department'):
+    # Poll kafka
     def poll():
-        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS,
-                                 auto_offset_reset='earliest',
-                                 enable_auto_commit=True,
-                                 auto_commit_interval_ms=100,
-                                 group_id='task')
+        # Initialize consumer Instance
+        consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS)
+        consumer.subscribe(topics=[topic])
+        print("About to start polling for topic:", topic)
+        consumer.poll(timeout_ms=6000)
         print("Started Polling for topic:", topic)
         for msg in consumer:
-            msg = json.loads(msg.value.decode('utf-8'))
-            userid = msg['userid']
-            department = msg['department']
+            print("Entered the loop\nKey: ", msg.key.decode(), " Value:", msg.value.decode())
             with app.app_context():
-                db = get_db()
-                cur = db.cursor()
-                sql_insert = "update task set department= '" + str(department) + "' where userid=" + str(userid)
-                cur.execute(sql_insert)
-                db.commit()
+                msg_json = eval(msg.value.decode())
+                change_department(msg_json['department'], msg_json['name'])
             kafka_listener(msg)
 
     print("About to register listener to topic:", topic)
     t1 = threading.Thread(target=poll)
     t1.start()
     print("started a background thread")
+
+
+def activate_user(user):
+    db = get_db()
+    sql = 'update task set task_unfinished=0 where and `user`="{}" ;' \
+        .format(user)
+    print(sql)
+    cur = db.execute(sql)
+    db.commit()
+    cur.close()
+
+
+def change_department(department, user):
+    db = get_db()
+    sql = 'update task set department="{}" where and `user`="{}" ;' \
+        .format(department, user)
+    print(sql)
+    cur = db.execute(sql)
+    db.commit()
+    cur.close()
 
 
 def kafka_listener(data):
-    print("kafka_listener")
+    print(data)
 
 
 if __name__ == "__main__":
     # init_db()
-    register_kafka_listener('register_user', kafka_listener)
-    kafka_listener_update_passwd('update_passwd', kafka_listener)
-    kafka_listener_update_department('update_department', kafka_listener)
+    register_kafka_employee(topic='register_employee')  # {'name':'', 'department':''}
+    kafka_change_password(topic='update_passwd')  # {'name':''}
+    kafka_change_department(topic='update_department')  # {'name':'', 'department':''}
     app.run(debug=False, host='0.0.0.0', port=6003)

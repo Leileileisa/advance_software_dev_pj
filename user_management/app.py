@@ -58,7 +58,7 @@ def new_password():
             producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
                                      key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-            future = producer.send('update_passwd', {'userid': id})
+            future = producer.send('update_passwd', {'name': id})
             future.get(timeout=10)  # 监控是否发送成功
         except kafka_errors:  # 发送失败抛出kafka_errors
             return traceback.format_exc()

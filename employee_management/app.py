@@ -88,7 +88,7 @@ def transfer():
             producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
                                      key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                      value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-            future = producer.send('update_department', {'userid': id, 'department': department})
+            future = producer.send('update_department', {'name': id, 'department': department})
             future.get(timeout=6000)  # 监控是否发送成功
             producer.close()
         except kafka_errors:  # 发送失败抛出kafka_errors
