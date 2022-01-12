@@ -170,8 +170,7 @@ def kafka_change_department(topic='update_department'):
 
 def activate_user(user):
     db = get_db()
-    sql = 'update task set task_unfinished=0 where and `user`="{}" ;' \
-        .format(user)
+    sql = 'update task set task_unfinished=0 where `user`="{}" '.format(user)
     print(sql)
     cur = db.execute(sql)
     db.commit()
@@ -180,8 +179,7 @@ def activate_user(user):
 
 def change_department(department, user):
     db = get_db()
-    sql = 'update task set department="{}" where and `user`="{}" ;' \
-        .format(department, user)
+    sql = 'update task set department="{}" where `user`="{}" '.format(department, user)
     print(sql)
     cur = db.execute(sql)
     db.commit()
