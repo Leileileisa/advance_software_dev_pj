@@ -5,27 +5,30 @@ from flask import g
 import sqlite3
 from kafka import KafkaProducer
 from kafka import KafkaConsumer
-from kafka.errors import  kafka_errors
+from kafka.errors import kafka_errors
 import traceback
 import threading
 import json
+
 app = Flask(__name__)
 DATABASE = 'database.db'
-BOOT_STRAP_SERVERS='kafka:9092'
+BOOT_STRAP_SERVERS = 'kafka:9092'
 
-text=[]
+text = []
+
+
 @app.route("/")
 def index():
-  page_html="""
+    page_html = """
   <h1>hello user_management!!!!wwwwwww</h1>
   """
-  return page_html+str(text)
+    return page_html + str(text)
 
 
 @app.route('/see')
 def see():
-    db=get_db()
-    cur=db.cursor()
+    db = get_db()
+    cur = db.cursor()
     cur.execute('select * from user')
     rv = cur.fetchall()
     cur.close()
@@ -34,40 +37,37 @@ def see():
 
 @app.route('/new_password')
 def new_password():
-    id = request.args.get('id',None)
-    password=request.args.get('password',None)
-    new_password=request.args.get('new_password',None)
+    id = request.args.get('id', None)
+    password = request.args.get('password', None)
+    new_password = request.args.get('new_password', None)
     if id is None:
         return f'fail! input your id!'
     if password is None:
         return f'fail! input your password!'
     if new_password is None:
         return f'fail! input your new_password!'
-    db=get_db()
-    cur=db.cursor()
+    db = get_db()
+    cur = db.cursor()
     text.append(new_password)
     try:
-        sql_insert='update user set password =\'' +  str(new_password) + '\' where id = ' + str(id)
+        sql_insert = 'update user set password =\'' + str(new_password) + '\' where id = ' + str(id)
         text.append(sql_insert)
         cur.execute(sql_insert)
         db.commit()
         try:
             producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
-                                    key_serializer=lambda k: json.dumps(k).encode('utf-8'),
-                                    value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+                                     key_serializer=lambda k: json.dumps(k).encode('utf-8'),
+                                     value_serializer=lambda v: json.dumps(v).encode('utf-8'))
             future = producer.send('update_passwd', {'userid': id})
             future.get(timeout=10)  # 监控是否发送成功
         except kafka_errors:  # 发送失败抛出kafka_errors
             return traceback.format_exc()
         except Exception as e:
-            return e        
-        
-        
+            return e
+
         return f'create new password successfully! your new_password: {escape(new_password)}'
     except:
         return f'fail! illegal password!'
-    
-
 
 
 def get_db():
@@ -79,19 +79,19 @@ def get_db():
 
 @app.route('/login')
 def login():
-    id=request.args.get('id',None) 
-    password=request.args.get('password',None)
+    id = request.args.get('id', None)
+    password = request.args.get('password', None)
     if id is None:
         return f'fail! input your id!'
     if password is None:
         return f'fail! input your password!'
-    db=get_db()
-    cur=db.cursor()
-    sql_select="select * from user where id="+str(id)+" and password= '"+str(password)+"'"
+    db = get_db()
+    cur = db.cursor()
+    sql_select = "select * from user where id=" + str(id) + " and password= '" + str(password) + "'"
     try:
         cur.execute(sql_select)
         rv = cur.fetchall()
-        if len(rv)==0:
+        if len(rv) == 0:
             return f'fail!'
         return f'success!'
     except:
@@ -116,7 +116,7 @@ def init_db():
 
 
 def register_kafka_listener(topic, listener):
-# Poll kafka
+    # Poll kafka
     def poll():
         # Initialize consumer Instance
         consumer = KafkaConsumer(topic, bootstrap_servers=BOOT_STRAP_SERVERS,
@@ -131,13 +131,13 @@ def register_kafka_listener(topic, listener):
             db = get_db()
             for msg in consumer:
                 text.append(msg.value)
-                id=json.loads(msg.value.decode('utf-8'))['id']
-                passwd=json.loads(msg.value.decode('utf-8'))['name']
-                department=json.loads(msg.value.decode('utf-8'))['department']
+                id = json.loads(msg.value.decode('utf-8'))['id']
+                passwd = json.loads(msg.value.decode('utf-8'))['name']
+                department = json.loads(msg.value.decode('utf-8'))['department']
                 text.append(passwd)
                 text.append(id)
                 text.append(msg.offset)
-                cur=db.cursor()
+                cur = db.cursor()
                 sql_insert = 'insert into user (id,password) values (' \
                              '\'' + str(id) + '\', \'' + str(123456) + '\')'
                 cur.execute(sql_insert)
@@ -146,7 +146,7 @@ def register_kafka_listener(topic, listener):
                     producer = KafkaProducer(bootstrap_servers=BOOT_STRAP_SERVERS,
                                              key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                                              value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-                    future = producer.send('register_user', {'userid': id,'department':department})
+                    future = producer.send('register_user', {'userid': id, 'department': department})
                     future.get(timeout=10)  # 监控是否发送成功
                 except kafka_errors:  # 发送失败抛出kafka_errors
                     return traceback.format_exc()
@@ -154,14 +154,15 @@ def register_kafka_listener(topic, listener):
                     return e
         consumer.close()
 
-
     print("About to register listener to topic:", topic)
     t1 = threading.Thread(target=poll)
     t1.start()
     print("started a background thread")
 
+
 def kafka_listener(data):
     print("Image Ratings:\n", data.value.decode("utf-8"))
+
 
 # init_db()
 register_kafka_listener('register_employee', kafka_listener)
