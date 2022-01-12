@@ -48,6 +48,7 @@ def register():
                                  value_serializer=lambda v: json.dumps(v).encode('utf-8'))
         future = producer.send('register_employee', {'id': id, 'name': name, 'department': department})
         future.get(timeout=6000)  # 监控是否发送成功
+        print("发送{}消息成功！".format('register_employee'))
         producer.close()
     except kafka_errors:  # 发送失败抛出kafka_errors
         return traceback.format_exc()

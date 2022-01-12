@@ -155,6 +155,7 @@ def kafka_listener(data):
     print("Image Ratings:\n", data.value.decode("utf-8"))
 
 
-# init_db()
-register_kafka_listener('register_employee', kafka_listener)
-app.run(debug=False, host='0.0.0.0', port=6002)
+if __name__ == '__main__':
+    # init_db()
+    register_kafka_listener('register_employee', kafka_listener)
+    app.run(debug=False, host='0.0.0.0', port=6002)
